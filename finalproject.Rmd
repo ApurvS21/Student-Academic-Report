@@ -1,0 +1,413 @@
+---
+title: "Students Academic Performance"
+subtitle: 'Apurv Sathwara, Student Id: 0792620'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+
+* I _Apurv Sathwara_, hereby state that I have not communicated with or gained information in anyway from any person or resource that would violate the College’s academic integrity policies, and that all work   presented is my own. In addition, I also agree not to share my work in any way, before or after submission,that   would violate the College’s academic integrity policies. 
+  
+- "R version 4.1.1"
+
+- Rstudio version-version 1.4.1717
+
+_Documentation of the data set:_  
+
+■	attribution of the owner/creator of the data:
+  https://www.kaggle.com/aljarah
+  
+■	links to the data:
+  https://www.kaggle.com/aljarah/xAPI-Edu-Data?select=xAPI-Edu-Data.csv
+
+
+- __Introduction__
+
+- __Load Dataset__
+```{r}
+finalproject <- read.csv("C:\\Users\\HP\\Desktop\\DAB501\\Data\\acadamicds.csv")
+```
+
+```{r}
+dim(finalproject)
+```
+
+As can be seen here from the output obtained,the dataset consists of 17 columns. However,as the class is our response variable, we consider only the rest of the 16 features and try to visualise and understand their effect on class data set.
+
+- The purpose of this research is to Evaluate the Factors that May Affect Students’ Academic Performance.
+
+- This is an educational data set which is collected from learning management system (LMS) called Kalboard 360.
+
+- The dataset consists of 305 males and 175 females. The students come from different origins such as 179 students are from Kuwait, 172 students are from Jordan, 28 students from Palestine, 22 students are from Iraq, 17 students from Lebanon, 12 students from Tunis, 11 students from Saudi Arabia, 9 students from Egypt, 7 students from Syria, 6 students from USA, Iran and Libya, 4 students from Morocco and one student from Venezuela.
+
+- The dataset is collected through two educational semesters: 245 student records are collected during the first semester and 235 student records are collected during the second semester.
+
+
+__1__ Gender - student's gender (nominal: 'Male' or 'Female’)
+
+
+__2__ Nationality- student's nationality (nominal:’ Kuwait’,’ Lebanon’,’ Egypt’,’ SaudiArabia’,’ USA’,’ Jordan’,’
+Venezuela’,’ Iran’,’ Tunis’,’ Morocco’,’ Syria’,’ Palestine’,’ Iraq’,’ Lybia’)
+
+
+__3__ Place of birth- student's Place of birth (nominal:’ Kuwait’,’ Lebanon’,’ Egypt’,’ SaudiArabia’,’ USA’,’ Jordan’,’
+Venezuela’,’ Iran’,’ Tunis’,’ Morocco’,’ Syria’,’ Palestine’,’ Iraq’,’ Lybia’)
+
+
+__4__ Educational Stages- educational level student belongs (nominal: ‘lowerlevel’,’MiddleSchool’,’HighSchool’)
+
+
+__5__ Grade Levels- grade student belongs (nominal: ‘G-01’, ‘G-02’, ‘G-03’, ‘G-04’, ‘G-05’, ‘G-06’, ‘G-07’, ‘G-08’, ‘G-09’, ‘G-10’, ‘G-11’, ‘G-12 ‘)
+
+
+__6__ Section ID- classroom student belongs (nominal:’A’,’B’,’C’)
+
+
+__7__ Topic- course topic (nominal:’ English’,’ Spanish’, ‘French’,’ Arabic’,’ IT’,’ Math’,’ Chemistry’, ‘Biology’, ‘Science’,’ History’,’ Quran’,’ Geology’)
+
+
+__8__ Semester- school year semester (nominal:’ First’,’ Second’)
+
+
+__9__ Parent responsible for student (nominal:’mother’,’father’)
+
+
+__10__ Raised hand- how many times the student raises his/her hand on classroom (numeric:0-100)
+
+
+__11__- Visited resources- how many times the student visits a course content(numeric:0-100)
+
+
+__12__ Viewing announcements-how many times the student checks the new announcements(numeric:0-100)
+
+
+__13__ Discussion groups- how many times the student participate on discussion groups (numeric:0-100)
+
+
+__14__ Parent Answering Survey- parent answered the surveys which are provided from school or not
+(nominal:’Yes’,’No’)
+
+
+__15__ Parent School Satisfaction- the Degree of parent satisfaction from school(nominal:’Yes’,’No’)
+
+
+__16__ Student Absence Days-the number of absence days for each student (nominal: above-7, under-7)
+
+
+__17__ Class- The students are classified into three numerical intervals based on their total grade/mark:
+      L（Low-Level）：interval includes values from 0 to 69,
+      M（Middle-Level）：interval includes values from 70 to 89,
+      H（High-Level）：interval includes values from 90-100.
+      
+      
+      
+- __Load Libraries__
+```{r}
+library(tidyverse)
+library(plyr)
+library(dplyr)
+library(corrplot)
+library(ggplot2)
+library(gridExtra)
+library(ggthemes)
+library(caret)
+library(MASS)
+library(randomForest)
+library(party)
+library(plotly)
+library(rpart)
+library(rpart.plot)
+library(caret)
+```    
+      
+
+- __The Project__
+
+- __Data Inspecting__
+
+```{r}
+#checking the structure of dataset
+str(finalproject)
+```
+
+
+
+
+__First of all, let’s see a glimpse of our Dataset__
+
+```{r}
+glimpse(finalproject)
+```
+
+
+- __Data Preprocessing__
+
+- __Missing Values__
+
+```{r}
+colSums(is.na(finalproject))
+```
+
+We found that there are NO missing values in Dataset. So, no need to remove anything.
+
+
+```{r}
+#renaming the columns
+names<-c("gender","nation","birthplace",
+  "stageid","gradeid","sectionid","topic",
+  "semester","relation","raisedhands",
+  "n_visit","n_view","discussion","p_answer",
+  "p_satis","n_absent","class")
+colnames(finalproject)<-names
+```
+The variables are thereby renamed for easy interpretation. 
+
+```{r}
+#changing the levels of class
+finalproject$class<-factor(finalproject$class,levels = c("L","M","H"))
+```
+
+```{r}
+#checking the summary statistics
+summary(finalproject)
+```
+
+```{r}
+#observing the first few observations
+head(finalproject)
+```
+
+```{r}
+#observing the last few observations
+tail(finalproject)
+```
+
+
+- __Exploratory data analysis__
+
+- __Gender__
+- Let us try to find if there exists any relationship between the gender and the performance of the students.
+
+```{r}
+#noting effect on the performance of the students
+ggplot(finalproject, aes(gender,fill=class)) +
+  stat_count()+ ggtitle("Performance by gender") +
+  labs(x="Gender",y="Performance") + 
+  theme(plot.title = element_text(face="bold", size=16, hjust=0)) +
+  theme(axis.title = element_text(color="#666666", face="bold", size=10)) 
+```
+
+It can be concluded that the female students have outperformed the male students according to the data we have. This is depicted visually in the graph above.
+
+
+- __Nationality__
+- Let us try to observe if any particular nationality is dominant in our analysis. 
+
+
+```{r}
+#exploring the nationality variable
+ggplot(finalproject, aes(x=nation))+
+  stat_count(color="darkblue", fill="lightblue")+
+  ggtitle("Distribution of students by nationality")+
+  theme(axis.text = element_text(angle = 45))
+```
+
+The graph reveals that Jordan and Kuwait are over-represented in our sample when compared to other nationalities. Egypt, Iran, Lybia, Morocco, Syria, Tunis, USA and Venezuela have very few observations.
+
+
+- __Topic__
+- The topics pursued by the students of various nationalities can be studies from the graph below.
+
+```{r}
+ggplot(finalproject, aes(x = topic, fill = nation)) + geom_bar() +
+    labs(x = "Topic", y = "Student Count")+
+  coord_flip()+
+  ggtitle("Topic By Nationality")
+```
+
+Chemistry has the least diversity among all the topics. Most of the enrolled students in chemistry are from Jordan. Also, most of the students who have pursued IT are from Kuwait. Topics like French, English and Arabic have the most diversity.
+
+
+```{r}
+ggplot(finalproject, aes(topic,fill=class))+ 
+  stat_count()+ ggtitle("Performance by topic") +
+  labs(x="Topic",y="Count") + 
+  theme(plot.title = element_text(face="bold", size=16, hjust=0)) +
+  theme(axis.title = element_text(face="bold", size=10))
+```
+
+Students have been performing really well in biology. We can also note that no student has scored less than 70 in Geology.
+
+
+- __Studentid__
+
+```{r}
+#exploring the stageid variable
+ggplot(finalproject, aes(x=stageid))+
+  stat_count(color="darkblue", fill="lightblue")+
+  ggtitle("Distribution of students across different stageid")
+```
+
+Most of the data available is for the middle school students and high school has very few observations. Next we will try to note if these levels have considerable effect on our class variable.
+
+```{r}
+ggplot(finalproject, aes(stageid,fill=class))+ stat_count()+ ggtitle("Performance by stageid") +
+  labs(x="StageID",y="Count") + 
+  theme(plot.title = element_text(face="bold", size=16, hjust=0)) +
+  theme(axis.title = element_text(face="bold", size=10)) 
+```
+
+The school levels do not tend to affect the performance of the students considerably. Majority of the students score between the range of 70-89 irrespective of their schooling level.
+
+
+- __Semester__
+
+```{r}
+ggplot(finalproject, aes(semester,fill=class)) +
+  stat_count()+ ggtitle("Performance by semester") +
+  labs(x="Semester",y="Performance") + 
+  theme(plot.title = element_text(face="bold", size=16, hjust=0)) +
+  theme(axis.title = element_text(face="bold", size=10)) 
+```
+
+The majority of the students seem to score between 70-89 irrespective of the semesters . However,the proportion of students scoring more than 89 is higher in the second semester.
+
+
+- __SectionId__
+
+```{r}
+ggplot(finalproject, aes(x = sectionid, fill = topic))+
+  geom_bar() +
+  labs(x = "Section ID", y = "Count")+
+  ggtitle("Distribution of students across the sections")
+```
+
+
+- __Parents’ satisfaction__
+
+```{r}
+ggplot(finalproject, aes(p_satis,fill=class)) + 
+  stat_count()+ ggtitle("Performance by parents' satisfaction") +
+  labs(x="Parents' satisfaction",y="Performance") + 
+  theme(plot.title = element_text(face="bold", size=16, hjust=0)) +
+  theme(axis.title = element_text(face="bold", size=10))
+```
+
+
+- __Exploring the continuous variables__
+
+
+```{r}
+#Checking the correlation between continuous variables
+corrplot(cor(finalproject[(10:13)]),method="number")
+```
+
+The variables n_visit and raisedhands have quite a significant correlation between themselves. Hence, the students who have been visiting the resources continuously are more likely to raise hands in the classes than the ones who didnt.
+
+
+
+```{r}
+#exploring the continuous variables
+plot_ly(finalproject, x = ~class, y = ~raisedhands, type = "box") %>% 
+  layout(title= "Performance by raisedhands",
+         xaxis = list(title = 'class',
+                      zeroline = TRUE),
+         yaxis = list(title = 'Raised hands' 
+                      ))
+```
+
+
+```{r}
+plot_ly(finalproject, x = ~class, y = ~n_visit, type = "box") %>%
+  layout(title= "Performance by number of visits",
+         xaxis = list(title = 'class',
+                      zeroline = TRUE),
+         yaxis = list(title = 'n_visits'
+                      ))
+```
+```{r}
+plot_ly(finalproject, x = ~class, y = ~n_view, type = "box") %>%
+  layout(title= "Performance by number of views",
+         xaxis = list(title = 'class',
+                      zeroline = TRUE),
+         yaxis = list(title = 'n_views'
+                      ))
+```
+
+
+The performance of the students seems to be dependent on the number of times they raised their hands. This can be a measure of their involvement in the class.
+
+
+```{r}
+ggplot(finalproject, aes(x = raisedhands, color = gender))+
+  geom_density()+
+  ggtitle("Raised hands Vs gender")
+```
+
+The female students can be observed to have raised hands more than the male students. This seems to concur with the idea that the number of hands raise is a potential factor to determine the academic performance of the students.
+
+```{r}
+ggplot(finalproject, aes(x = raisedhands, color = topic)) +
+  geom_density() +
+   ggtitle("Raised hands Vs topic")
+```
+
+Geology can be said to have been the most engaging subjects of all. IT on the other hand has extremely less student participation.
+
+
+
+- __Data Splitting__
+
+- In classification the data set needs to be divided into trainig and test datasets.
+- Model training is performed using the training set and test set is used to assess the performance of the classification model.
+
+
+```{r}
+#Subsetting the data into train and test samples
+set.seed(123)
+subset <- sample(nrow(finalproject), nrow(finalproject) * 0.8)
+train = finalproject[subset, ]
+test = finalproject[-subset, ]
+```
+
+
+- __Model Training__
+
+```{r}
+#Building a decision tree
+tree_model <- rpart(class ~ ., data = train, method = "class")
+rpart.plot(tree_model)
+```
+
+```{r}
+#Predicting on training set
+train$prediction <- predict(tree_model,type = "class")
+x <- table(train$class, train$prediction, dnn = c("Truth", "Predicted"))
+confusionMatrix(x)
+```
+
+- The accuracy of the model comes out to be 81.8% which is quite good. 
+
+
+```{r}
+#Predicting on test set
+test$prediction <- predict(tree_model,test,type = "class")
+y <- table(test$class, test$prediction, dnn = c("Truth", "Predicted"))
+confusionMatrix(y)
+```
+
+- The accuracy comes out to be 72% which is lower than the accuracy of the training set. 
+
+- __Conclusion__
+
+__Que__ What I have Learned and Done.?
+
+__Ans.__ In the result it shows that trained data has the best accuracy as compared to the test data. Also, this algorithm use to make future prediction about studetns learning process and spot students who are unsuccessful. Moreover, from this output one can examine the studetns capabilities work on students who doesn't performed well in the class as per the data given. The data firstly pre-processed and presented with different exploratory data analysis Second, a correlation analysis is used to investigate the relationships between certain characteristics and class variable and then splitted and modeled by a decision tree algorithm and give results as per the given data.
+
+
+__Que__ What I will do to improve and my thoughts.?
+
+__Ans.__ Some column will be deleted. Both Grade ID and Stage ID showed the educational stage of students, and the Stage ID was divided into 12 category, which is unessisarly difficult to analyst. Therefore, Stage ID will be deleted. And PlaceofBirth will be deleted out of similary reason, which is similary to Natuinallty. And SectionID which presents the classrooms belonging of students and Semester also will be deleted. I will divide the remaining 13 factors into three categories. 1.Demographic characteristics 2.Academic background characteristics 3. Behavior characteristics. At the same time, I will also analyze the possible internal connections between each column.
